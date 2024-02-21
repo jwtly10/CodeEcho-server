@@ -13,7 +13,7 @@ func NewRouter(handlers *Handlers) *http.ServeMux {
 	router := http.NewServeMux()
 
 	routes := Routes{
-		Route{"/", handlers.HomeHandler},
+		Route{"/chatgpt/stream", handlers.ChatGPTStreamHandler},
 	}
 
 	for _, route := range routes {
