@@ -41,6 +41,7 @@ func (s *Service) ProxyStreamChatGPTReq(msgCtx []openai.ChatCompletionMessage, m
 	stream, err := c.CreateChatCompletionStream(ctx, req)
 	if err != nil {
 		fmt.Printf("ChatCompletionStream error: %v\n", err)
+		WriteErrorAsJSON("Internal server error", w, http.StatusInternalServerError)
 		return
 	}
 	defer stream.Close()
