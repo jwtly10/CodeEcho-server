@@ -10,13 +10,25 @@ import (
 	"net/http"
 )
 
-func ProxyStreamChatGPTReq(apiKey string, msgCtx []openai.ChatCompletionMessage, msg string, w http.ResponseWriter) {
+type Service struct {
+	Conf *Config
+}
+
+func NewService(config *Config) *Service {
+	return &Service{Conf: config}
+}
+
+// ProxyStreamChatGPTReq handles the stream ChatGPT request
+// The request body is expected to be a JSON object with the following fields:
+// - messages: []openai.ChatCompletionMessage the context of the conversation
+// - msg: string
+func (s *Service) ProxyStreamChatGPTReq(msgCtx []openai.ChatCompletionMessage, msg string, w http.ResponseWriter) {
 	msgCtx = append(msgCtx, openai.ChatCompletionMessage{
 		Role:    openai.ChatMessageRoleUser,
 		Content: msg,
 	})
 
-	c := openai.NewClient(apiKey)
+	c := openai.NewClient(s.Conf.OpenaiApiKey)
 	ctx := context.Background()
 
 	req := openai.ChatCompletionRequest{

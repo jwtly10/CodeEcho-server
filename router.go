@@ -9,11 +9,12 @@ type Route struct {
 
 type Routes []Route
 
-func NewRouter(handlers *Handlers) *http.ServeMux {
+func NewRouter(m *Middleware, h *Handlers) *http.ServeMux {
 	router := http.NewServeMux()
 
 	routes := Routes{
-		Route{"/chatgpt/stream", handlers.ChatGPTStreamHandler},
+		Route{Path: "/api/v1/chatgpt/stream", Handler: m.HandleMiddleware(h.ChatGPTStreamHandler)},
+		Route{Path: "/api/v1/transcribe", Handler: m.HandleMiddleware(h.DeepGramTranscribeHandler)},
 	}
 
 	for _, route := range routes {

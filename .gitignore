@@ -1,3 +1,4 @@
 build/*
 .idea/*
 .env
+CodeEcho-Server.iml

@@ -6,16 +6,24 @@ import (
 )
 
 func main() {
-	conf, err := LoadConfig()
+	c, err := LoadConfig()
 	if err != nil {
 		log.Fatal("LoadConfig: ", err)
 	}
 
-	h := NewHandlers(conf)
-	r := NewRouter(h)
+	s := NewService(c)
+	h := NewHandlers(c, s)
+	mw := NewMiddleware()
+	r := NewRouter(mw, h)
 
-	log.Printf("Server started on http://localhost:8080\n")
-	err = http.ListenAndServe(":8080", r)
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: r,
+	}
+
+	log.Printf("Server listening on %s", server.Addr)
+
+	err = server.ListenAndServe()
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
