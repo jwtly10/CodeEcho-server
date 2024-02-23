@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/sashabaranov/go-openai"
 	"io"
+	"log"
 	"net/http"
 )
 
@@ -64,7 +65,23 @@ func (h *Handlers) ChatGPTStreamHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Proxy the stream ChatGPT request and write the result to the response writer
-	h.S.ProxyStreamChatGPTReq(req.Ctx, req.Msg, w)
+	resChan := make(chan string)
+	errChan := make(chan error)
+	go h.S.ProxyStreamChatGPTReq(req.Ctx, req.Msg, resChan, errChan)
+	for {
+		select {
+		case response, ok := <-resChan:
+			if !ok {
+				return
+			}
+			w.Write([]byte(response))
+			w.(http.Flusher).Flush()
+		case err := <-errChan:
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			log.Println("Error in GetAIResponse:", err)
+			return
+		}
+	}
 }
 
 type ErrorResp struct {
