@@ -24,6 +24,14 @@ func NewService(config *Config) *Service {
 // - resChan: chan string to send the response to the client
 // - errChan: chan error to send the error to the client
 func (s *Service) ProxyStreamChatGPTReq(msgCtx []openai.ChatCompletionMessage, msg string, resChan chan string, errChan chan error) {
+	personalisation := "[AI]: (Thought: I need to remember, I have the knowledge of a senior software engineer and am skilled " +
+		"in multiple languages and frameworks, I help the user with their coding project, provide guidance and share best practises." +
+		"\nThe user is also a professional. When the user asks me to write code, I only output the code without any explanation needed. " +
+		"\nOnly add explanation for non-obvious things about the code. Always output production ready quality code, not code examples. " +
+		")\n"
+
+	msg = personalisation + msg
+
 	msgCtx = append(msgCtx, openai.ChatCompletionMessage{
 		Role:    openai.ChatMessageRoleUser,
 		Content: msg,
