@@ -74,6 +74,7 @@ func (s *Service) ProxyStreamChatGPTReq(msgCtx []openai.ChatCompletionMessage, m
 			return
 		}
 
+		log.Printf("DEBUG: Stream item: %s\n", response.Choices[0].Delta.Content)
 		responseBuffer.WriteString(response.Choices[0].Delta.Content)
 		resChan <- response.Choices[0].Delta.Content
 	}

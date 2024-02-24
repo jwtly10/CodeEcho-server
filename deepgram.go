@@ -57,6 +57,8 @@ func (s *Service) DeepGramTranscribeAudio(audio []byte, w http.ResponseWriter) {
 		os.Exit(1)
 	}
 
+	log.Println("DEBUG: Deepgram response: ", string(data))
+
 	responseStruct, err := ParseDeepgramResponse(data)
 	if err != nil {
 		log.Printf("ParseDeepgramResponse failed. Err: %v\n", err)
