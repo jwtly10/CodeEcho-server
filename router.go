@@ -15,6 +15,7 @@ func NewRouter(m *Middleware, h *Handlers) *http.ServeMux {
 	routes := Routes{
 		Route{Path: "/api/v1/chatgpt/stream", Handler: m.HandleMiddleware(h.ChatGPTStreamHandler)},
 		Route{Path: "/api/v1/transcribe", Handler: m.HandleMiddleware(h.DeepGramTranscribeHandler)},
+		Route{Path: "/", Handler: m.HandleMiddleware(h.Test)},
 	}
 
 	for _, route := range routes {

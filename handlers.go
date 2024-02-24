@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
+	"github.com/jwtly10/CodeEcho-Server/logger"
 	"github.com/sashabaranov/go-openai"
 	"io"
-	"log"
 	"net/http"
 )
 
@@ -28,6 +28,17 @@ type ChatGPTReq struct {
 
 // DeepGramTranscribeHandler handles the transcription of audio
 // The audio req body is expected to be base64 encoded of []bytes PCM audio
+
+func (h *Handlers) Test(w http.ResponseWriter, r *http.Request) {
+	log := logger.Get()
+
+	log.Info().Msg("incoming request")
+	log.Debug().Msg("incoming request")
+	log.Warn().Msg("incoming request")
+
+	w.Write([]byte("Hello world"))
+}
+
 func (h *Handlers) DeepGramTranscribeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		WriteErrorAsJSON("Method not allowed", w, http.StatusMethodNotAllowed)
@@ -52,6 +63,7 @@ func (h *Handlers) DeepGramTranscribeHandler(w http.ResponseWriter, r *http.Requ
 
 // ChatGPTStreamHandler handles the stream ChatGPT request
 func (h *Handlers) ChatGPTStreamHandler(w http.ResponseWriter, r *http.Request) {
+	log := logger.Get()
 	if r.Method != http.MethodPost {
 		WriteErrorAsJSON("Method not allowed", w, http.StatusMethodNotAllowed)
 		return
@@ -78,7 +90,7 @@ func (h *Handlers) ChatGPTStreamHandler(w http.ResponseWriter, r *http.Request) 
 			w.(http.Flusher).Flush()
 		case err := <-errChan:
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			log.Println("Error in GetAIResponse:", err)
+			log.Error().Err(err).Msg("Error proxying ChatGPT stream")
 			return
 		}
 	}

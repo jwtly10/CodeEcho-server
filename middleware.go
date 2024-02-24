@@ -1,8 +1,9 @@
 package main
 
 import (
-	"log"
+	"github.com/jwtly10/CodeEcho-Server/logger"
 	"net/http"
+	"time"
 )
 
 type Middleware struct {
@@ -23,7 +24,19 @@ func (m *Middleware) HandleMiddleware(next http.HandlerFunc, mws ...func(http.Ha
 
 func (m *Middleware) LogRequest(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("Received request: %s %s", r.Method, r.URL.Path)
+		start := time.Now()
+		log := logger.Get()
+		defer func() {
+			log.
+				Info().
+				Str("method", r.Method).
+				Str("url", r.URL.RequestURI()).
+				Str("user_agent", r.UserAgent()).
+				Dur("elapsed_ms", time.Since(start)).
+				Msg("incoming request")
+
+		}()
+
 		next.ServeHTTP(w, r)
 	}
 }

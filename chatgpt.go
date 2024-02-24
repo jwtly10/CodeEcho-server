@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"github.com/jwtly10/CodeEcho-Server/logger"
 	"github.com/sashabaranov/go-openai"
 	"io"
-	"log"
 )
 
 type Service struct {
@@ -24,21 +25,22 @@ func NewService(config *Config) *Service {
 // - resChan: chan string to send the response to the client
 // - errChan: chan error to send the error to the client
 func (s *Service) ProxyStreamChatGPTReq(msgCtx []openai.ChatCompletionMessage, msg string, resChan chan string, errChan chan error) {
+	log := logger.Get()
 	personalisation := "[AI]: (Thought: I need to remember, I have the knowledge of a senior software engineer and am skilled " +
 		"in multiple languages and frameworks, I help the user with their coding project, provide guidance and share best practises." +
 		"\nThe user is also a professional. When the user asks me to write code, I only output the code without any explanation needed. " +
 		"\nOnly add explanation for non-obvious things about the code. Always output production ready quality code, not code examples. " +
 		")\n"
 
-	log.Printf("DEBUG: before msgCtx: %v\n", msgCtx)
+	log.Debug().Msg(fmt.Sprintf("Context before manipulation: %v\n", msgCtx))
 	// Drop the context for anything beyond the last 3 messages
 	if len(msgCtx) > 4 {
 		msgCtx = msgCtx[len(msgCtx)-4:]
 	}
-
-	log.Printf("DEBUG: after msgCtx: %v\n", msgCtx)
+	log.Debug().Msg(fmt.Sprintf("Context after manipulation: %v\n", msgCtx))
 
 	msg = personalisation + msg
+	log.Debug().Msg(fmt.Sprintf("Message after manipulation: %s\n", msg))
 
 	msgCtx = append(msgCtx, openai.ChatCompletionMessage{
 		Role:    openai.ChatMessageRoleUser,
@@ -57,7 +59,7 @@ func (s *Service) ProxyStreamChatGPTReq(msgCtx []openai.ChatCompletionMessage, m
 
 	stream, err := c.CreateChatCompletionStream(ctx, req)
 	if err != nil {
-		log.Println("ChatCompletionStream error: ", err)
+		log.Error().Err(err).Msg("Error creating ChatGPT stream")
 		errChan <- err
 		return
 	}
@@ -65,24 +67,24 @@ func (s *Service) ProxyStreamChatGPTReq(msgCtx []openai.ChatCompletionMessage, m
 
 	var responseBuffer bytes.Buffer
 
-	log.Println("Stream started")
+	log.Debug().Msg("ChatGPT stream created")
 
 	for {
 		response, err := stream.Recv()
 
 		if errors.Is(err, io.EOF) {
-			log.Println("Stream closed")
+			log.Debug().Msg("ChatGPT stream closed")
 			close(resChan)
 			return
 		}
 
 		if err != nil {
-			log.Println("Streaming error")
+			log.Error().Err(err).Msg("Error receiving ChatGPT stream")
 			errChan <- err
 			return
 		}
 
-		log.Printf("DEBUG: Stream item: %s\n", response.Choices[0].Delta.Content)
+		log.Debug().Msg(fmt.Sprintf("Stream item: %s\n", response.Choices[0].Delta.Content))
 		responseBuffer.WriteString(response.Choices[0].Delta.Content)
 		resChan <- response.Choices[0].Delta.Content
 	}

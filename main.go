@@ -1,15 +1,18 @@
 package main
 
 import (
-	"log"
+	"fmt"
+	"github.com/jwtly10/CodeEcho-Server/logger"
 	"net/http"
 )
 
 func main() {
 	c, err := LoadConfig()
 	if err != nil {
-		log.Fatal("LoadConfig: ", err)
+		fmt.Println("Error loading config")
+		return
 	}
+	log := logger.Get()
 
 	s := NewService(c)
 	h := NewHandlers(c, s)
@@ -21,10 +24,10 @@ func main() {
 		Handler: r,
 	}
 
-	log.Printf("Server listening on %s", server.Addr)
+	log.Info().Str("address", server.Addr).Msg("Server listening")
 
 	err = server.ListenAndServe()
 	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
+		log.Fatal().Err(err).Msg("Server failed to start")
 	}
 }

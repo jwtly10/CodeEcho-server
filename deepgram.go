@@ -7,7 +7,7 @@ import (
 	"github.com/deepgram/deepgram-go-sdk/pkg/api/prerecorded/v1"
 	"github.com/deepgram/deepgram-go-sdk/pkg/client/interfaces"
 	client "github.com/deepgram/deepgram-go-sdk/pkg/client/prerecorded"
-	"log"
+	"github.com/jwtly10/CodeEcho-Server/logger"
 	"net/http"
 	"os"
 )
@@ -21,17 +21,17 @@ type TranscriptionResult struct {
 // The audio type is expected to be PCM format, and internal logic will convert it to WAV format
 // The audio is expected to be 16-bit, 2-channel, 16kHz
 func (s *Service) DeepGramTranscribeAudio(audio []byte, w http.ResponseWriter) {
-
+	log := logger.Get()
 	tmpfile, err := os.CreateTemp("", fmt.Sprintf("audio_*.wav"))
 	if err != nil {
-		fmt.Println("Error creating temporary file:", err)
+		log.Error().Err(err).Msg("Error creating temporary file")
 		return
 	}
 	defer os.Remove(tmpfile.Name())
 
 	err = ConvertPCMToWAV(tmpfile, audio, 16000, 16, 2)
 	if err != nil {
-		log.Println("ConvertPCMToWAV: ", err)
+		log.Error().Err(err).Msg("Error converting PCM to WAV")
 		return
 	}
 
@@ -47,21 +47,21 @@ func (s *Service) DeepGramTranscribeAudio(audio []byte, w http.ResponseWriter) {
 
 	res, err := dg.FromFile(ctx, tmpfile.Name(), options)
 	if err != nil {
-		fmt.Printf("FromStream failed. Err: %v\n", err)
+		log.Error().Err(err).Msg("Deepgram transcription failed")
 		os.Exit(1)
 	}
 
 	data, err := json.Marshal(res)
 	if err != nil {
-		fmt.Printf("json.Marshal failed. Err: %v\n", err)
+		log.Error().Err(err).Msg("Error marshalling Deepgram response")
 		os.Exit(1)
 	}
 
-	log.Println("DEBUG: Deepgram response: ", string(data))
+	log.Debug().Msg("Deepgram response: " + string(data))
 
 	responseStruct, err := ParseDeepgramResponse(data)
 	if err != nil {
-		log.Printf("ParseDeepgramResponse failed. Err: %v\n", err)
+		log.Error().Err(err).Msg("Error parsing deepgram response")
 		WriteErrorAsJSON("Error parsing deepgram response", w, http.StatusInternalServerError)
 	}
 
@@ -69,13 +69,14 @@ func (s *Service) DeepGramTranscribeAudio(audio []byte, w http.ResponseWriter) {
 	w.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(w).Encode(responseStruct)
 	if err != nil {
-		log.Println("Error encoding transcript JSON")
+		log.Error().Err(err).Msg("Error encoding transcript JSON")
 		WriteErrorAsJSON("Error encoding transcript JSON", w, http.StatusInternalServerError)
 	}
 }
 
 // ParseDeepgramResponse parses the Deepgram response and returns the transcript and confidence
 func ParseDeepgramResponse(res []byte) (TranscriptionResult, error) {
+	log := logger.Get()
 
 	var d struct {
 		Results struct {
@@ -86,7 +87,7 @@ func ParseDeepgramResponse(res []byte) (TranscriptionResult, error) {
 	}
 
 	if err := json.Unmarshal(res, &d); err != nil {
-		log.Println("Error unmarshalling Deepgram response")
+		log.Error().Err(err).Msg("Error unmarshalling Deepgram response")
 		return TranscriptionResult{}, err
 	}
 
@@ -99,7 +100,7 @@ func ParseDeepgramResponse(res []byte) (TranscriptionResult, error) {
 			Confidence: confidence,
 		}, nil
 	} else {
-		log.Println("Unable to parse transcript JSON")
+		log.Error().Msg("Unable to parse transcript JSON")
 		return TranscriptionResult{}, fmt.Errorf("unable to parse transcript JSON")
 	}
 }
