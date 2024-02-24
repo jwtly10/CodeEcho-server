@@ -30,6 +30,14 @@ func (s *Service) ProxyStreamChatGPTReq(msgCtx []openai.ChatCompletionMessage, m
 		"\nOnly add explanation for non-obvious things about the code. Always output production ready quality code, not code examples. " +
 		")\n"
 
+	log.Printf("DEBUG: before msgCtx: %v\n", msgCtx)
+	// Drop the context for anything beyond the last 3 messages
+	if len(msgCtx) > 4 {
+		msgCtx = msgCtx[len(msgCtx)-4:]
+	}
+
+	log.Printf("DEBUG: after msgCtx: %v\n", msgCtx)
+
 	msg = personalisation + msg
 
 	msgCtx = append(msgCtx, openai.ChatCompletionMessage{
