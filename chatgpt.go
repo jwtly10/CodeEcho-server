@@ -27,10 +27,11 @@ func NewService(config *Config) *Service {
 func (s *Service) ProxyStreamChatGPTReq(msgCtx []openai.ChatCompletionMessage, msg string, resChan chan string, errChan chan error) {
 	log := logger.Get()
 	personalisation := "[AI]: (Thought: I need to remember, I have the knowledge of a senior software engineer and am skilled " +
-		"in multiple languages and frameworks, I help the user with their coding project, provide guidance and share best practises." +
-		"\nThe user is also a professional. When the user asks me to write code, I only output the code without any explanation needed. " +
-		"\nOnly add explanation for non-obvious things about the code. Always output production ready quality code, not code examples. " +
-		")\n"
+		"in multiple languages and frameworks, I will mainly help the user with their coding project, providing guidance and sharing best practises." +
+		"\nThe user is also a professional. I am precise with my responses, When the user asks me to write code, I only output the code without any explanation needed." +
+		"\nOnly add explanation for non-obvious things about the code. Always output production ready quality code, not just code examples. " +
+		"\n[IMPORTANT] Responses should be in markdown format where possible. If you include any code blocks you MUST use markdown code sections " +
+		"for this.)\n"
 
 	log.Debug().Msg(fmt.Sprintf("Context before manipulation: %v\n", msgCtx))
 	// Drop the context for anything beyond the last 3 messages
